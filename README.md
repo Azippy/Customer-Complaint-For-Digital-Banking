@@ -83,6 +83,7 @@ customer-complaint/
 │   ├── public/              Public frontend assets
 │   ├── src/                 React components, pages, API client, and context
 │   ├── .base44/             Base44 development configuration
+│   ├── code-guideline.md     Base44 development and verification notes
 │   ├── .gitignore           Frontend ignore rules
 │   ├── docker-compose.base44.yml  Docker Compose configuration
 │   ├── package.json         Frontend scripts and dependencies
