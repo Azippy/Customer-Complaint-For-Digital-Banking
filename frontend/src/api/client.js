@@ -46,6 +46,9 @@ export const authApi = {
   register: (body) => api.post("/auth/register", body),
   login: (body) => api.post("/auth/login", body),
   me: () => api.get("/auth/me"),
+  forgotPassword: (body) => api.post("/auth/forgot-password", body),
+  resetPassword: (token, body) =>
+    api.post(`/auth/reset-password/${token}`, body),
 };
 
 // Complaints (user)

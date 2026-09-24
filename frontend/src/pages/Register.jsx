@@ -113,8 +113,16 @@ export default function Register() {
             </div>
             {error && <ErrorAlert message={error} />}
             <button type="submit" className="btn-primary w-full" disabled={loading}>
-              {loading ? "Creating account..." : "Create account"}
-              {!loading && <ArrowRight className="h-4 w-4" />}
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  Creating account...
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  Create account <ArrowRight className="h-4 w-4" />
+                </span>
+              )}
             </button>
           </form>
           <p className="mt-6 text-center text-sm text-slate-500">
