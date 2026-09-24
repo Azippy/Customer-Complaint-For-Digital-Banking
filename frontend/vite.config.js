@@ -9,7 +9,7 @@ export default defineConfig({
     allowedHosts: true,
     proxy: {
       "/api": {
-        target: "http://localhost:5000",
+        target: "https://customer-complaint-for-digital-bank.onrender.com",
         changeOrigin: true,
       },
     },

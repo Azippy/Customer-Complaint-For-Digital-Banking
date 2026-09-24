@@ -127,7 +127,7 @@ Set the values in `backend/.env`:
 | `CLOUDINARY_API_KEY`    | Cloudinary API key                  |
 | `CLOUDINARY_API_SECRET` | Cloudinary API secret               |
 
-The frontend currently uses relative `/api` requests and does not require a `.env` file. Vite proxies those requests to `http://localhost:5000` during local development.
+For local development, the frontend uses relative `/api` requests and Vite proxies them to `http://localhost:5000`. For Vercel production builds, set `VITE_API_URL` to the public backend URL followed by `/api`, for example `https://your-backend.onrender.com/api`.
 
 ## Local Development
 
@@ -176,6 +176,16 @@ http://localhost:5000
 ```
 
 The backend must be running before registering or logging in through the frontend.
+
+### Vercel Deployment
+
+In the Vercel project settings, add this environment variable for the Production environment:
+
+```text
+VITE_API_URL=https://your-backend.onrender.com/api
+```
+
+Replace the URL with the actual public backend URL, then redeploy the frontend. The backend must also allow the Vercel frontend origin through CORS.
 
 ## Docker Development
 
