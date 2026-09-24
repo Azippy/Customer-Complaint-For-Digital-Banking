@@ -1,0 +1,23 @@
+node_modules
+.env
+*.env
+!.env.example
+
+
+cd /c/Users/user/Desktop/customer-complaint
+
+# Remove nested Git metadata only, not your source files
+rm -rf backend/.git
+rm -rf frontend/.git
+
+# Create one repository for both folders
+git init
+git branch -M main
+git add backend frontend
+
+# Check that .env and node_modules are not staged
+git status
+
+git commit -m "Add backend and frontend"
+git remote add origin https://github.com/YOUR_USERNAME/customer-complaint.git
+git push -u origin main

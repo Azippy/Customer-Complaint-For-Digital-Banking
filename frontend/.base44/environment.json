@@ -1,0 +1,53 @@
+{
+  "previewPort": 3000,
+  "healthPath": "/",
+  "startCommand": "docker compose -f docker-compose.base44.yml up -d",
+  "secrets": [
+    {
+      "name": "JWT_SECRET",
+      "description": "Secret used to sign and verify JWTs. Generate a long random string.",
+      "requiredAtBoot": true,
+      "generatedForDevelopment": true
+    },
+    {
+      "name": "EMAIL_HOST",
+      "description": "SMTP server hostname (e.g. smtp.gmail.com). Optional — only needed for email notifications.",
+      "requiredAtBoot": false
+    },
+    {
+      "name": "EMAIL_PORT",
+      "description": "SMTP server port (587 or 465). Optional — only needed for email notifications.",
+      "requiredAtBoot": false
+    },
+    {
+      "name": "EMAIL_USER",
+      "description": "SMTP username. Optional — only needed for email notifications.",
+      "requiredAtBoot": false
+    },
+    {
+      "name": "EMAIL_PASS",
+      "description": "SMTP password / app password. Optional — only needed for email notifications.",
+      "requiredAtBoot": false
+    },
+    {
+      "name": "EMAIL_FROM",
+      "description": "Sender email address. Optional — only needed for email notifications.",
+      "requiredAtBoot": false
+    },
+    {
+      "name": "CLOUDINARY_CLOUD_NAME",
+      "description": "Cloudinary cloud name. Optional — only needed for upload features.",
+      "requiredAtBoot": false
+    },
+    {
+      "name": "CLOUDINARY_API_KEY",
+      "description": "Cloudinary API key. Optional — only needed for upload features.",
+      "requiredAtBoot": false
+    },
+    {
+      "name": "CLOUDINARY_API_SECRET",
+      "description": "Cloudinary API secret. Optional — only needed for upload features.",
+      "requiredAtBoot": false
+    }
+  ]
+}
