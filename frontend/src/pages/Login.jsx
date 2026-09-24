@@ -61,7 +61,15 @@ export default function Login() {
               </div>
             </div>
             <div>
-              <label className="label">Password</label>
+              <div className="flex items-center justify-between">
+                <label className="label">Password</label>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-semibold text-indigo-600 hover:text-indigo-700"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
@@ -76,8 +84,16 @@ export default function Login() {
             </div>
             {error && <ErrorAlert message={error} />}
             <button type="submit" className="btn-primary w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign in"}
-              {!loading && <ArrowRight className="h-4 w-4" />}
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  Signing in...
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  Sign in <ArrowRight className="h-4 w-4" />
+                </span>
+              )}
             </button>
           </form>
           <p className="mt-6 text-center text-sm text-slate-500">
