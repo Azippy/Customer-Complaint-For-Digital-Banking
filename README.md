@@ -112,20 +112,21 @@ cp .env.example .env
 
 Set the values in `backend/.env`:
 
-| Variable                | Purpose                             |
-| ----------------------- | ----------------------------------- |
-| `PORT`                  | Backend port, normally `5000`       |
-| `MONGO_URI`             | MongoDB connection string           |
-| `JWT_SECRET`            | Secret used to sign JWTs            |
-| `JWT_EXPIRES_IN`        | JWT lifetime, such as `7d`          |
-| `EMAIL_HOST`            | SMTP host, such as `smtp.gmail.com` |
-| `EMAIL_PORT`            | SMTP port, normally `587` or `465`  |
-| `EMAIL_USER`            | SMTP username                       |
-| `EMAIL_PASS`            | SMTP password or app password       |
-| `EMAIL_FROM`            | Sender email address                |
-| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name               |
-| `CLOUDINARY_API_KEY`    | Cloudinary API key                  |
-| `CLOUDINARY_API_SECRET` | Cloudinary API secret               |
+| Variable                | Purpose                               |
+| ----------------------- | ------------------------------------- |
+| `PORT`                  | Backend port, normally `5000`         |
+| `MONGO_URI`             | MongoDB connection string             |
+| `JWT_SECRET`            | Secret used to sign JWTs              |
+| `JWT_EXPIRES_IN`        | JWT lifetime, such as `7d`            |
+| `EMAIL_HOST`            | SMTP host, such as `smtp.gmail.com`   |
+| `EMAIL_PORT`            | SMTP port, normally `587` or `465`    |
+| `EMAIL_USER`            | SMTP username                         |
+| `EMAIL_PASS`            | SMTP password or app password         |
+| `EMAIL_FROM`            | Sender email address                  |
+| `FRONTEND_URL`          | Frontend base URL used in reset links |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name                 |
+| `CLOUDINARY_API_KEY`    | Cloudinary API key                    |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret                 |
 
 For local development, the frontend uses relative `/api` requests and Vite proxies them to `http://localhost:5000`. For Vercel production builds, set `VITE_API_URL` to the public backend URL followed by `/api`, for example `https://your-backend.onrender.com/api`.
 
@@ -272,6 +273,22 @@ Authorization: Bearer <token>
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `GET /api/auth/me`
+- `POST /api/auth/forgot-password`
+- `POST /api/auth/reset-password/:token`
+
+Password reset flow:
+
+1. Request a reset link with `POST /api/auth/forgot-password` and an email in the request body.
+2. Open the emailed link, or copy the token from the URL after `/reset-password/`.
+3. Submit the new password to `POST /api/auth/reset-password/:token`.
+
+Example request body:
+
+```json
+{
+  "password": "NewPassword123"
+}
+```
 
 ### User Complaints
 
@@ -338,6 +355,14 @@ Authorization: Bearer <token>
 PENDING -> ASSIGNED -> IN_PROGRESS -> RESOLVED -> CLOSED
 PENDING -> REJECTED
 ```
+
+## Email Notifications
+
+- New complaints notify active administrators by email.
+- Assigning a complaint notifies the assigned handler and complaint owner.
+- Status changes, comments, resolutions, and rejections notify the relevant participants.
+- Gmail SMTP requires an App Password when two-step verification is enabled.
+- Delivery depends on the recipient email stored in the user account; check Spam or Promotions if a message is not visible.
 
 ## Security and Git Guidance
 

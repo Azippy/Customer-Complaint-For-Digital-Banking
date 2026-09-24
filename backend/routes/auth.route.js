@@ -6,7 +6,7 @@ const {
   loginValidator,
 } = require("../validators/authValidator.js");
 
-const { register, login } = require("../controllers/auth.controller.js");
+const { register, login, resetPassword, forgotPassword } = require("../controllers/auth.controller.js");
 
 const protect = require("../middleware/auth.middleware.js");
 
@@ -21,5 +21,8 @@ router.get("/me", protect, (req, res) => {
     user: req.user,
   });
 });
+router.post("/forgot-password", forgotPassword);
+
+router.post("/reset-password/:token", resetPassword);
 
 module.exports = router;
