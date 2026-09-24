@@ -91,8 +91,7 @@ export const commentApi = {
 
 // Notifications
 export const notificationApi = {
-  list: (params) =>
-    api.get(`/notifications?${new URLSearchParams(params)}`),
+  list: (params) => api.get(`/notifications?${new URLSearchParams(params)}`),
   markRead: (id) => api.patch(`/notifications/${id}/read`),
   markAllRead: () => api.patch(`/notifications/read-all`),
 };
