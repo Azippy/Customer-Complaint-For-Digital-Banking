@@ -4,18 +4,17 @@ const { changeComplaintStatus } = require("../services/complaintService.js");
 const { createAuditLog } = require("../services/auditLogService.js");
 const {
   createNotification,
-  notifyComplaintEvent,
+  notifyComplaintEventInBackground,
 } = require("../services/notificationService.js");
 const User = require("../models/user.model.js");
+const AppError = require("../utils/AppError.js");
 
-const createComplaint = async (req, res) => {
+const createComplaint = async (req, res, next) => {
   try {
     const { title, description, category, priority } = req.body;
 
     if (!title || !description || !category) {
-      return res.status(400).json({
-        message: "Title, description and category are required",
-      });
+      throw new AppError("Title, description and category are required", 400);
     }
 
     const complaintId = await generateComplaintId();
@@ -61,7 +60,7 @@ const createComplaint = async (req, res) => {
       description: "Complaint submitted by user",
     });
 
-    await notifyComplaintEvent({
+    notifyComplaintEventInBackground({
       complaint,
       event: "SUBMITTED",
       actor: req.user,
@@ -73,14 +72,11 @@ const createComplaint = async (req, res) => {
     });
   } catch (error) {
     console.error("Create complaint error:", error);
-
-    return res.status(500).json({
-      message: "Server error while creating complaint",
-    });
+    next(error);
   }
 };
 
-const getMyComplaints = async (req, res) => {
+const getMyComplaints = async (req, res, next) => {
   try {
     const { page = 1, limit = 10, status, category, priority } = req.query;
 
@@ -131,14 +127,11 @@ const getMyComplaints = async (req, res) => {
     });
   } catch (error) {
     console.error("Get my complaints error:", error);
-
-    return res.status(500).json({
-      message: "Server error while retrieving complaints",
-    });
+    next(error);
   }
 };
 
-const getComplaint = async (req, res) => {
+const getComplaint = async (req, res, next) => {
   try {
     const complaint = await Complaint.findOne({
       complaintId: req.params.id,
@@ -149,9 +142,7 @@ const getComplaint = async (req, res) => {
       .populate("statusHistory.changedBy", "firstName lastName role");
 
     if (!complaint) {
-      return res.status(404).json({
-        message: "Complaint not found",
-      });
+      throw new AppError("Complaint not found", 404);
     }
 
     return res.status(200).json({
@@ -159,14 +150,11 @@ const getComplaint = async (req, res) => {
     });
   } catch (error) {
     console.error("Get complaint error:", error);
-
-    return res.status(500).json({
-      message: "Server error while retrieving complaint",
-    });
+    next(error);
   }
 };
 
-const closeComplaint = async (req, res) => {
+const closeComplaint = async (req, res, next) => {
   try {
     const complaint = await Complaint.findOne({
       complaintId: req.params.id,
@@ -174,15 +162,11 @@ const closeComplaint = async (req, res) => {
     });
 
     if (!complaint) {
-      return res.status(404).json({
-        message: "Complaint not found",
-      });
+      throw new AppError("Complaint not found", 404);
     }
 
     if (complaint.status !== "RESOLVED") {
-      return res.status(400).json({
-        message: "Only resolved complaints can be closed",
-      });
+      throw new AppError("Only resolved complaints can be closed", 400);
     }
 
     complaint.closedAt = new Date();
@@ -209,12 +193,7 @@ const closeComplaint = async (req, res) => {
     });
   } catch (error) {
     console.error("Close complaint error:", error);
-
-    return res.status(error.statusCode || 500).json({
-      message: error.statusCode
-        ? error.message
-        : "Server error while closing complaint",
-    });
+    next(error);
   }
 };
 

@@ -19,6 +19,7 @@ The project contains two applications:
 - Admin and handler dashboards
 - JWT authentication
 - Request validation and centralized error handling
+- Consistent `AppError` responses with field-level validation details
 - File uploads through Cloudinary
 - Email notifications through SMTP
 - Swagger API documentation
@@ -83,7 +84,7 @@ customer-complaint/
 │   ├── public/              Public frontend assets
 │   ├── src/                 React components, pages, API client, and context
 │   ├── .base44/             Base44 development configuration
-│   ├── code-guideline.md     Base44 development and verification notes
+│   ├── coding-guildline.md   Base44 development and verification notes
 │   ├── .gitignore           Frontend ignore rules
 │   ├── docker-compose.base44.yml  Docker Compose configuration
 │   ├── package.json         Frontend scripts and dependencies
@@ -261,6 +262,13 @@ Health check:
 GET http://localhost:5000/api/health
 ```
 
+## Validation and Error Handling
+
+- Registration passwords must contain between 8 and 20 characters.
+- Invalid request data, authorization failures, missing resources, and invalid status transitions throw `AppError` and use the centralized error handler.
+- Validation responses include a readable `message` and an `errors` array with the affected field, message, and request location.
+- Unexpected controller and service failures are forwarded to the centralized error middleware instead of returning generic responses from individual controllers.
+
 ## API Endpoints
 
 Protected endpoints require a valid JWT. Send the token as:
@@ -362,6 +370,7 @@ PENDING -> REJECTED
 - New complaints notify active administrators by email.
 - Assigning a complaint notifies the assigned handler and complaint owner.
 - Status changes, comments, resolutions, and rejections notify the relevant participants.
+- Complaint emails and in-app event notifications are dispatched in the background so SMTP latency does not block complaint, comment, assignment, or status-change responses.
 - Gmail SMTP requires an App Password when two-step verification is enabled.
 - Delivery depends on the recipient email stored in the user account; check Spam or Promotions if a message is not visible.
 

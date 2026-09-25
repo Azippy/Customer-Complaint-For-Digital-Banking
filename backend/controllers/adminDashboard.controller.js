@@ -1,7 +1,7 @@
 const Complaint = require("../models/complaint.model.js");
 const User = require("../models/user.model.js");
 
-const getDashboardStats = async (req, res) => {
+const getDashboardStats = async (req, res, next) => {
   try {
     // const now = new Date();
 
@@ -212,10 +212,7 @@ const getDashboardStats = async (req, res) => {
     });
   } catch (error) {
     console.error("Get dashboard stats error:", error);
-
-    return res.status(500).json({
-      message: "Server error while retrieving dashboard data",
-    });
+    next(error);
   }
 };
 

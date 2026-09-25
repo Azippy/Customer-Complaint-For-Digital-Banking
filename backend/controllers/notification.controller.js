@@ -1,6 +1,7 @@
 const Notification = require("../models/notification.model.js");
+const AppError = require("../utils/AppError.js");
 
-const getNotifications = async (req, res) => {
+const getNotifications = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, unreadOnly } = req.query;
 
@@ -56,15 +57,11 @@ const getNotifications = async (req, res) => {
     });
   } catch (error) {
     console.error("Get notifications error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Server error while retrieving notifications",
-    });
+    next(error);
   }
 };
 
-const markNotificationAsRead = async (req, res) => {
+const markNotificationAsRead = async (req, res, next) => {
   try {
     const notification = await Notification.findOneAndUpdate(
       {
@@ -80,10 +77,7 @@ const markNotificationAsRead = async (req, res) => {
     );
 
     if (!notification) {
-      return res.status(404).json({
-        success: false,
-        message: "Notification not found",
-      });
+      throw new AppError("Notification not found", 404);
     }
 
     return res.status(200).json({
@@ -93,15 +87,11 @@ const markNotificationAsRead = async (req, res) => {
     });
   } catch (error) {
     console.error("Mark notification as read error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
+    next(error);
   }
 };
 
-const markAllNotificationsAsRead = async (req, res) => {
+const markAllNotificationsAsRead = async (req, res, next) => {
   try {
     await Notification.updateMany(
       {
@@ -121,11 +111,7 @@ const markAllNotificationsAsRead = async (req, res) => {
     });
   } catch (error) {
     console.error("Mark all notifications as read error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
+    next(error);
   }
 };
 

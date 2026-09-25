@@ -5,23 +5,22 @@ const generateToken = require("../utils/generateToken.js");
 const AppError = require("../utils/AppError.js");
 const crypto = require("crypto");
 const { sendPasswordResetEmail } = require("../services/emailService.js");
+const { validatePassword } = require("../validators/authValidator.js");
 
-const register = async (req, res) => {
+const register = async (req, res, next) => {
   try {
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password } = req.body || {};
 
     if (!firstName || !lastName || !email || !password) {
-      return res.status(400).json({
-        message: "All fields are required",
-      });
+      throw new AppError("All fields are required", 400);
     }
+
+    validatePassword(password);
 
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
-      return res.status(409).json({
-        message: "User with this email already exists",
-      });
+      throw new AppError("User with this email already exists", 409);
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -42,43 +41,32 @@ const register = async (req, res) => {
     });
   } catch (error) {
     console.error("Registration error:", error);
-
-    return res.status(500).json({
-      message: "Server error during registration",
-    });
+    next(error);
   }
 };
 
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
 
     if (!email || !password) {
-      return res.status(400).json({
-        message: "Email and password are required",
-      });
+      throw new AppError("Email and password are required", 400);
     }
 
     const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
-      return res.status(404).json({
-        message: "Invalid email or password",
-      });
+      throw new AppError("please register to continue", 404);
     }
 
     if (!user.isActive) {
-      return res.status(403).json({
-        message: "Your account has been deactivated",
-      });
+      throw new AppError("Your account has been deactivated", 403);
     }
 
     const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {
-      return res.status(401).json({
-        message: "Invalid email or password",
-      });
+      throw new AppError("Invalid email or password", 401);
     }
 
     const token = generateToken(user._id);
@@ -90,10 +78,7 @@ const login = async (req, res) => {
     });
   } catch (error) {
     console.error("Login error:", error);
-
-    return res.status(500).json({
-      message: "Server error during login",
-    });
+    next(error);
   }
 };
 

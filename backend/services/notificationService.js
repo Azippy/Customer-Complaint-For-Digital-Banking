@@ -1,6 +1,7 @@
 const Notification = require("../models/notification.model.js");
 
 const User = require("../models/user.model.js");
+const AppError = require("../utils/AppError.js");
 
 const { sendEmail } = require("./emailService.js");
 
@@ -61,7 +62,7 @@ const notifyComplaintEvent = async ({
   reason = null,
 }) => {
   if (!complaint) {
-    throw new Error("Complaint is required");
+    throw new AppError("Complaint is required", 400);
   }
 
   const owner = await getUserById(complaint.submittedBy);
@@ -271,6 +272,12 @@ const notifyComplaintEvent = async ({
   }
 };
 
+const notifyComplaintEventInBackground = (payload) => {
+  void notifyComplaintEvent(payload).catch((error) => {
+    console.error("Background complaint notification error:", error);
+  });
+};
+
 // const createNotification = async ({
 //   recipient,
 //   complaint = null,
@@ -328,4 +335,5 @@ const notifyComplaintEvent = async ({
 module.exports = {
   createNotification,
   notifyComplaintEvent,
+  notifyComplaintEventInBackground,
 };

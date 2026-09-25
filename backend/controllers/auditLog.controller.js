@@ -1,18 +1,16 @@
 const AuditLog = require("../models/auditLog.model.js");
 
 const Complaint = require("../models/complaint.model.js");
+const AppError = require("../utils/AppError.js");
 
-const getComplaintHistory = async (req, res) => {
+const getComplaintHistory = async (req, res, next) => {
   try {
     const { id } = req.params;
 
     const complaint = await Complaint.findById(id);
 
     if (!complaint) {
-      return res.status(404).json({
-        success: false,
-        message: "Complaint not found",
-      });
+      throw new AppError("Complaint not found", 404);
     }
 
     const user = req.user;
@@ -26,10 +24,10 @@ const getComplaintHistory = async (req, res) => {
       complaint.assignedTo.toString() === user._id.toString();
 
     if (!isAdmin && !isOwner && !isAssignedHandler) {
-      return res.status(403).json({
-        success: false,
-        message: "You are not authorized to view this complaint history",
-      });
+      throw new AppError(
+        "You are not authorized to view this complaint history",
+        403,
+      );
     }
 
     const history = await AuditLog.find({
@@ -47,11 +45,7 @@ const getComplaintHistory = async (req, res) => {
     });
   } catch (error) {
     console.error("Get complaint history error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Server error while retrieving complaint history",
-    });
+    next(error);
   }
 };
 

@@ -1,32 +1,27 @@
 const Comment = require("../models/comment.model.js");
 const Complaint = require("../models/complaint.model.js");
+const AppError = require("../utils/AppError.js");
 
 const { createAuditLog } = require("../services/auditLogService.js");
 
 const {
-  notifyComplaintEvent,
+  notifyComplaintEventInBackground,
   createNotification,
 } = require("../services/notificationService.js");
 
-const createComment = async (req, res) => {
+const createComment = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { message } = req.body;
 
     if (!message || !message.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: "Comment message is required",
-      });
+      throw new AppError("Comment message is required", 400);
     }
 
     const complaint = await Complaint.findById(id);
 
     if (!complaint) {
-      return res.status(404).json({
-        success: false,
-        message: "Complaint not found",
-      });
+      throw new AppError("Complaint not found", 404);
     }
 
     const user = req.user;
@@ -40,10 +35,10 @@ const createComment = async (req, res) => {
       complaint.assignedTo.toString() === user._id.toString();
 
     if (!isAdmin && !isOwner && !isAssignedHandler) {
-      return res.status(403).json({
-        success: false,
-        message: "You are not authorized to comment on this complaint",
-      });
+      throw new AppError(
+        "You are not authorized to comment on this complaint",
+        403,
+      );
     }
 
     const attachments = (req.files || []).map((file) => ({
@@ -67,7 +62,7 @@ const createComment = async (req, res) => {
       description: `${user.firstName} ${user.lastName} added a comment`,
     });
 
-    await notifyComplaintEvent({
+    notifyComplaintEventInBackground({
       complaint,
       event: "COMMENTED",
       actor: user,
@@ -82,25 +77,18 @@ const createComment = async (req, res) => {
     });
   } catch (error) {
     console.error("Create comment error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
+    next(error);
   }
 };
 
-const getComplaintComments = async (req, res) => {
+const getComplaintComments = async (req, res, next) => {
   try {
     const { id } = req.params;
 
     const complaint = await Complaint.findById(id);
 
     if (!complaint) {
-      return res.status(404).json({
-        success: false,
-        message: "Complaint not found",
-      });
+      throw new AppError("Complaint not found", 404);
     }
 
     const user = req.user;
@@ -114,10 +102,10 @@ const getComplaintComments = async (req, res) => {
       complaint.assignedTo.toString() === user._id.toString();
 
     if (!isAdmin && !isOwner && !isAssignedHandler) {
-      return res.status(403).json({
-        success: false,
-        message: "You are not authorized to view these comments",
-      });
+      throw new AppError(
+        "You are not authorized to view these comments",
+        403,
+      );
     }
 
     const comments = await Comment.find({
@@ -135,11 +123,7 @@ const getComplaintComments = async (req, res) => {
     });
   } catch (error) {
     console.error("Get comments error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
+    next(error);
   }
 };
 

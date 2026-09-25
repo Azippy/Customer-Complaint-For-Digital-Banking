@@ -1,13 +1,13 @@
 const Complaint = require("../models/complaint.model.js");
 const User = require("../models/user.model.js");
+const AppError = require("../utils/AppError.js");
 const { changeComplaintStatus } = require("../services/complaintService.js");
 const { createAuditLog } = require("../services/auditLogService.js");
 const {
   createNotification,
-  notifyComplaintEvent,
+  notifyComplaintEventInBackground,
 } = require("../services/notificationService.js");
-
-const getAllComplaints = async (req, res) => {
+const getAllComplaints = async (req, res, next) => {
   try {
     let {
       page = 1,
@@ -146,15 +146,11 @@ const getAllComplaints = async (req, res) => {
     });
   } catch (error) {
     console.error("Get all complaints error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Server error while retrieving complaints",
-    });
+    next(error);
   }
 };
 
-const getAdminComplaint = async (req, res) => {
+const getAdminComplaint = async (req, res, next) => {
   try {
     const complaint = await Complaint.findOne({
       complaintId: req.params.id,
@@ -164,9 +160,7 @@ const getAdminComplaint = async (req, res) => {
       .populate("statusHistory.changedBy", "firstName lastName role");
 
     if (!complaint) {
-      return res.status(404).json({
-        message: "Complaint not found",
-      });
+      throw new AppError("Complaint not found", 404);
     }
 
     return res.status(200).json({
@@ -174,35 +168,26 @@ const getAdminComplaint = async (req, res) => {
     });
   } catch (error) {
     console.error("Get admin complaint error:", error);
-
-    return res.status(500).json({
-      message: "Server error while retrieving complaint",
-    });
+    next(error);
   }
 };
 
-const assignComplaint = async (req, res) => {
+const assignComplaint = async (req, res, next) => {
   try {
     const { handlerId } = req.body;
 
     if (!handlerId) {
-      return res.status(400).json({
-        message: "handlerId is required",
-      });
+      throw new AppError("handlerId is required", 400);
     }
 
     const handler = await User.findById(handlerId);
 
     if (!handler) {
-      return res.status(404).json({
-        message: "Handler not found",
-      });
+      throw new AppError("Handler not found", 404);
     }
 
     if (handler.role !== "HANDLER") {
-      return res.status(400).json({
-        message: "Complaint can only be assigned to a HANDLER",
-      });
+      throw new AppError("Complaint can only be assigned to a HANDLER", 400);
     }
 
     const complaint = await Complaint.findOne({
@@ -210,15 +195,11 @@ const assignComplaint = async (req, res) => {
     });
 
     if (!complaint) {
-      return res.status(404).json({
-        message: "Complaint not found",
-      });
+      throw new AppError("Complaint not found", 404);
     }
 
     if (complaint.status !== "PENDING") {
-      return res.status(400).json({
-        message: "Only pending complaints can be assigned",
-      });
+      throw new AppError("Only pending complaints can be assigned", 400);
     }
 
     const oldStatus = complaint.status;
@@ -262,7 +243,7 @@ const assignComplaint = async (req, res) => {
       description: `Complaint assigned to ${handler.firstName} ${handler.lastName}`,
     });
 
-    await notifyComplaintEvent({
+    notifyComplaintEventInBackground({
       complaint,
       event: "ASSIGNED",
       actor: req.user,
@@ -274,21 +255,16 @@ const assignComplaint = async (req, res) => {
     });
   } catch (error) {
     console.error("Assign complaint error:", error);
-
-    return res.status(500).json({
-      message: "Server error while assigning complaint",
-    });
+    next(error);
   }
 };
 
-const rejectComplaint = async (req, res) => {
+const rejectComplaint = async (req, res, next) => {
   try {
     const { reason } = req.body;
 
     if (!reason || !reason.trim()) {
-      return res.status(400).json({
-        message: "Rejection reason is required",
-      });
+      throw new AppError("Rejection reason is required", 400);
     }
 
     const complaint = await Complaint.findOne({
@@ -296,15 +272,11 @@ const rejectComplaint = async (req, res) => {
     });
 
     if (!complaint) {
-      return res.status(404).json({
-        message: "Complaint not found",
-      });
+      throw new AppError("Complaint not found", 404);
     }
 
     if (complaint.status !== "PENDING") {
-      return res.status(400).json({
-        message: "Only pending complaints can be rejected",
-      });
+      throw new AppError("Only pending complaints can be rejected", 400);
     }
 
     const oldStatus = complaint.status;
@@ -335,7 +307,7 @@ const rejectComplaint = async (req, res) => {
       description: `Complaint rejected: ${reason}`,
     });
 
-    await notifyComplaintEvent({
+    notifyComplaintEventInBackground({
       complaint,
       event: "REJECTED",
       actor: req.user,
@@ -348,16 +320,11 @@ const rejectComplaint = async (req, res) => {
     });
   } catch (error) {
     console.error("Reject complaint error:", error);
-
-    return res.status(error.statusCode || 500).json({
-      message: error.statusCode
-        ? error.message
-        : "Server error while rejecting complaint",
-    });
+    next(error);
   }
 };
 
-const getHandlers = async (req, res) => {
+const getHandlers = async (req, res, next) => {
   try {
     const handlers = await User.find({ role: "HANDLER", isActive: true })
       .select("firstName lastName email role")
@@ -369,11 +336,7 @@ const getHandlers = async (req, res) => {
     });
   } catch (error) {
     console.error("Get handlers error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Server error while retrieving handlers",
-    });
+    next(error);
   }
 };
 

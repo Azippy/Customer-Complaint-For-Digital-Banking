@@ -2,12 +2,13 @@ const Complaint = require("../models/complaint.model.js");
 const { changeComplaintStatus } = require("../services/complaintService.js");
 const { createAuditLog } = require("../services/auditLogService.js");
 const { canTransition } = require("../utils/complaintStatus.js");
+const AppError = require("../utils/AppError.js");
 const {
   createNotification,
-  notifyComplaintEvent,
+  notifyComplaintEventInBackground,
 } = require("../services/notificationService.js");
 
-const getHandlerComplaints = async (req, res) => {
+const getHandlerComplaints = async (req, res, next) => {
   try {
     const { page = 1, limit = 10, status, priority, category } = req.query;
 
@@ -60,14 +61,11 @@ const getHandlerComplaints = async (req, res) => {
     });
   } catch (error) {
     console.error("Get handler complaints error:", error);
-
-    return res.status(500).json({
-      message: "Server error while retrieving handler complaints",
-    });
+    next(error);
   }
 };
 
-const getHandlerComplaint = async (req, res) => {
+const getHandlerComplaint = async (req, res, next) => {
   try {
     const complaint = await Complaint.findOne({
       complaintId: req.params.id,
@@ -78,9 +76,7 @@ const getHandlerComplaint = async (req, res) => {
       .populate("statusHistory.changedBy", "firstName lastName role");
 
     if (!complaint) {
-      return res.status(404).json({
-        message: "Complaint not found",
-      });
+      throw new AppError("Complaint not found", 404);
     }
 
     return res.status(200).json({
@@ -88,29 +84,22 @@ const getHandlerComplaint = async (req, res) => {
     });
   } catch (error) {
     console.error("Get handler complaint error:", error);
-
-    return res.status(500).json({
-      message: "Server error while retrieving complaint",
-    });
+    next(error);
   }
 };
 
-const updateComplaintStatus = async (req, res) => {
+const updateComplaintStatus = async (req, res, next) => {
   try {
     const { status } = req.body;
 
     if (!status) {
-      return res.status(400).json({
-        message: "Status is required",
-      });
+      throw new AppError("Status is required", 400);
     }
 
     const newStatus = status.toUpperCase();
 
     if (newStatus !== "IN_PROGRESS") {
-      return res.status(400).json({
-        message: "Handler can only change status to IN_PROGRESS",
-      });
+      throw new AppError("Handler can only change status to IN_PROGRESS", 400);
     }
 
     const complaint = await Complaint.findOne({
@@ -119,16 +108,14 @@ const updateComplaintStatus = async (req, res) => {
     });
 
     if (!complaint) {
-      return res.status(404).json({
-        message: "Complaint not found",
-      });
+      throw new AppError("Complaint not found", 404);
     }
 
     if (!canTransition(complaint.status, "IN_PROGRESS")) {
-      return res.status(400).json({
-        success: false,
-        message: `Cannot change complaint status from ${complaint.status} to IN_PROGRESS`,
-      });
+      throw new AppError(
+        `Cannot change complaint status from ${complaint.status} to IN_PROGRESS`,
+        400,
+      );
     }
 
     complaint.startedAt = new Date();
@@ -157,7 +144,7 @@ const updateComplaintStatus = async (req, res) => {
       description: "Handler started working on complaint",
     });
 
-    await notifyComplaintEvent({
+    notifyComplaintEventInBackground({
       complaint,
       event: "STARTED",
       actor: req.user,
@@ -169,23 +156,16 @@ const updateComplaintStatus = async (req, res) => {
     });
   } catch (error) {
     console.error("Update complaint status error:", error);
-
-    return res.status(error.statusCode || 500).json({
-      message: error.statusCode
-        ? error.message
-        : "Server error while updating complaint status",
-    });
+    next(error);
   }
 };
 
-const resolveComplaint = async (req, res) => {
+const resolveComplaint = async (req, res, next) => {
   try {
     const { resolution } = req.body;
 
     if (!resolution || !resolution.trim()) {
-      return res.status(400).json({
-        message: "Resolution is required",
-      });
+      throw new AppError("Resolution is required", 400);
     }
 
     const complaint = await Complaint.findOne({
@@ -194,22 +174,18 @@ const resolveComplaint = async (req, res) => {
     });
 
     if (!complaint) {
-      return res.status(404).json({
-        message: "Complaint not found",
-      });
+      throw new AppError("Complaint not found", 404);
     }
 
     if (complaint.status !== "IN_PROGRESS") {
-      return res.status(400).json({
-        message: "Only complaints in progress can be resolved",
-      });
+      throw new AppError("Only complaints in progress can be resolved", 400);
     }
 
     if (!canTransition(complaint.status, "RESOLVED")) {
-      return res.status(400).json({
-        success: false,
-        message: `Cannot change complaint status from ${complaint.status} to RESOLVED`,
-      });
+      throw new AppError(
+        `Cannot change complaint status from ${complaint.status} to RESOLVED`,
+        400,
+      );
     }
 
     complaint.resolution = resolution.trim();
@@ -239,7 +215,7 @@ const resolveComplaint = async (req, res) => {
       description: "Handler resolved complaint",
     });
 
-    await notifyComplaintEvent({
+    notifyComplaintEventInBackground({
       complaint,
       event: "RESOLVED",
       actor: req.user,
@@ -250,12 +226,7 @@ const resolveComplaint = async (req, res) => {
     });
   } catch (error) {
     console.error("Resolve complaint error:", error);
-
-    return res.status(error.statusCode || 500).json({
-      message: error.statusCode
-        ? error.message
-        : "Server error while resolving complaint",
-    });
+    next(error);
   }
 };
 

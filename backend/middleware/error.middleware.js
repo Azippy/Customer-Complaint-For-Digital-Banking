@@ -29,10 +29,16 @@ const errorHandler = (err, req, res, next) => {
     message = errors.join(", ");
   }
 
-  return res.status(statusCode).json({
+  const response = {
     success: false,
     message,
-  });
+  };
+
+  if (err.details) {
+    response.errors = err.details;
+  }
+
+  return res.status(statusCode).json(response);
 };
 
 module.exports = errorHandler;

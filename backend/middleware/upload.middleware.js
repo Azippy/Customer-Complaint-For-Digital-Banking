@@ -2,6 +2,7 @@ const multer = require("multer");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
 const cloudinary = require("../config/cloudinary.js");
+const AppError = require("../utils/AppError.js");
 
 const allowedMimeTypes = [
   "image/jpeg",
@@ -21,7 +22,7 @@ const storage = new CloudinaryStorage({
 const fileFilter = (req, file, cb) => {
   if (!allowedMimeTypes.includes(file.mimetype)) {
     return cb(
-      new Error("Only JPG, PNG, WEBP and PDF files are allowed"),
+      new AppError("Only JPG, PNG, WEBP and PDF files are allowed", 400),
       false,
     );
   }

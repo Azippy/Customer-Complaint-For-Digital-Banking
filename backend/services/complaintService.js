@@ -1,3 +1,5 @@
+const AppError = require("../utils/AppError.js");
+
 const allowedTransitions = {
   PENDING: ["ASSIGNED", "REJECTED"],
   ASSIGNED: ["IN_PROGRESS"],
@@ -13,13 +15,10 @@ const changeComplaintStatus = async (complaint, newStatus, changedBy, note) => {
   const allowedNextStatuses = allowedTransitions[currentStatus] || [];
 
   if (!allowedNextStatuses.includes(newStatus)) {
-    const error = new Error(
+    throw new AppError(
       `Cannot change complaint status from ${currentStatus} to ${newStatus}`,
+      400,
     );
-
-    error.statusCode = 400;
-
-    throw error;
   }
 
   complaint.status = newStatus;
