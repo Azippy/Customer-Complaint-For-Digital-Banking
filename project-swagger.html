@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Customer Complaint Project API Docs</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui.css"
+    />
+    <style>
+      html {
+        box-sizing: border-box;
+        overflow: -moz-scrollbars-vertical;
+        overflow-y: scroll;
+      }
+      *,
+      *:before,
+      *:after {
+        box-sizing: inherit;
+      }
+      body {
+        margin: 0;
+        background: #f8fafc;
+        color: #0f172a;
+        font-family: Inter, Arial, sans-serif;
+      }
+      .topbar {
+        background: linear-gradient(90deg, #0f172a 0%, #1d4ed8 100%);
+      }
+      .api-info {
+        padding: 18px 20px 0;
+      }
+      .swagger-ui .info .title {
+        font-size: 2rem;
+        color: #0f172a;
+      }
+      .swagger-ui .opblock .opblock-summary-operation-id,
+      .swagger-ui .opblock .opblock-summary-path,
+      .swagger-ui .opblock .opblock-summary-description {
+        font-size: 0.95rem;
+      }
+      .custom-toolbar {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        padding: 12px 20px 0;
+        background: #fff;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .custom-toolbar input {
+        flex: 1;
+        max-width: 540px;
+        padding: 10px 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 0.95rem;
+      }
+      .custom-toolbar button {
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 16px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .custom-toolbar button:hover {
+        background: #1d4ed8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="custom-toolbar">
+      <input
+        id="swagger-url"
+        type="text"
+        value="http://localhost:5000/api/docs.json"
+        aria-label="OpenAPI URL"
+      />
+      <button id="load-docs" type="button">Load Docs</button>
+    </div>
+    <div id="swagger-ui"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui-bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui-standalone-preset.js"></script>
+    <script>
+      const defaultUrl = "http://localhost:5000/api/docs.json";
+      const urlInput = document.getElementById("swagger-url");
+      const loadButton = document.getElementById("load-docs");
+
+      function initSwagger(url) {
+        const container = document.getElementById("swagger-ui");
+        container.innerHTML = "";
+
+        window.ui = SwaggerUIBundle({
+          url,
+          dom_id: "#swagger-ui",
+          deepLinking: true,
+          presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+          plugins: [SwaggerUIBundle.plugins.DownloadUrl],
+          layout: "BaseLayout",
+          tryItOutEnabled: true,
+          persistAuthorization: true,
+          docExpansion: "list",
+          filter: true,
+          supportedSubmitMethods: ["get", "put", "post", "delete", "patch"],
+        });
+      }
+
+      loadButton.addEventListener("click", () => {
+        const value = urlInput.value.trim() || defaultUrl;
+        initSwagger(value);
+      });
+
+      initSwagger(defaultUrl);
+    </script>
+  </body>
+</html>

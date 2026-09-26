@@ -6,8 +6,10 @@ Backend API for a role-based customer complaint management system. Users submit 
 
 - JWT authentication with `USER`, `HANDLER`, and `ADMIN` roles
 - Complaint creation, filtering, status transitions, assignment, rejection, and closure
+- Complaint attachments and comment attachments via multipart upload and Cloudinary storage
 - Comments, notifications, and audit history
-- Email notifications through SMTP
+- Email notifications through SMTP, including password resets
+- Reset-token-based password recovery flow
 - Cloudinary configuration for upload-related features
 - Helmet, CORS, request rate limiting, validation, and Morgan request logging
 
@@ -119,10 +121,12 @@ The server prefixes routes as shown below. Protected endpoints require a valid J
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `GET /api/auth/me`
+- `POST /api/auth/forgot-password` - send password-reset email
+- `POST /api/auth/reset-password/:token` - reset the password using the token
 
 ### Complaints
 
-- `POST /api/complaints` - user creates a complaint
+- `POST /api/complaints` - user creates a complaint, including optional multipart attachments
 - `GET /api/complaints/my` - user lists their complaints
 - `GET /api/complaints/:id` - user views a complaint
 - `PATCH /api/complaints/:id/close` - user closes a resolved complaint
@@ -146,7 +150,7 @@ The server prefixes routes as shown below. Protected endpoints require a valid J
 ### Comments, notifications, and audit history
 
 - `GET /api/complaints/:id/comments`
-- `POST /api/complaints/:id/comments`
+- `POST /api/complaints/:id/comments` - supports optional multipart file attachments
 - `GET /api/notifications`
 - `PATCH /api/notifications/read-all`
 - `PATCH /api/notifications/:id/read`

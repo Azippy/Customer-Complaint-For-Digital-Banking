@@ -11,18 +11,17 @@ The project contains two applications:
 
 ## Main Features
 
-- User registration, login, and authenticated sessions
+- User registration, login, and authenticated sessions with JWT
 - Role-based access for `USER`, `HANDLER`, and `ADMIN`
 - Complaint creation, filtering, tracking, assignment, rejection, resolution, and closure
-- Complaint comments and activity history
-- In-app notifications
-- Admin and handler dashboards
-- JWT authentication
-- Request validation and centralized error handling
-- Consistent `AppError` responses with field-level validation details
-- File uploads through Cloudinary
-- Email notifications through SMTP
-- Swagger API documentation
+- Complaint and comment attachments uploaded through multipart form requests and stored in Cloudinary
+- Complaint comments and audit history tracking
+- In-app notifications and SMTP email alerts
+- Admin and handler dashboards with role-specific views
+- Password reset flow with secure reset tokens and email delivery
+- Request validation and centralized `AppError`/error-handler responses
+- File upload support through Cloudinary with validation for image and PDF types
+- Swagger UI documentation for the backend API
 - Security middleware with Helmet, CORS, rate limiting, and Morgan logging
 
 ## Technology Stack
@@ -255,6 +254,14 @@ The raw OpenAPI document is available at:
 ```text
 http://localhost:5000/api/docs.json
 ```
+
+A project-wide Swagger page is also available at the repository root:
+
+```text
+customer-complaint/project-swagger.html
+```
+
+It documents the full complaint management workflow, including authentication, complaint uploads, comment attachments, dashboard endpoints, and notification flows.
 
 Health check:
 

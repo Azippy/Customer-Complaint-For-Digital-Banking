@@ -1,10 +1,10 @@
 const openapiDocument = {
   openapi: "3.0.3",
   info: {
-    title: "Customer Complaint API",
-    version: "1.0.0",
+    title: "Customer Complaint Management API",
+    version: "2.0.0",
     description:
-      "Role-based customer complaint management API. Use the Authorize button to provide a JWT as `Bearer <token>` for protected endpoints.",
+      "Role-based customer complaint management API with complaint attachments, comment uploads, notifications, audit history, dashboards, and password reset support. Use the Authorize button to provide a JWT as `Bearer <token>` for protected endpoints.",
   },
   servers: [
     {
@@ -27,6 +27,7 @@ const openapiDocument = {
     { name: "Notifications" },
     { name: "Audit History" },
     { name: "Dashboards" },
+    { name: "Uploads" },
   ],
   components: {
     securitySchemes: {
@@ -133,6 +134,22 @@ const openapiDocument = {
           user: { $ref: "#/components/schemas/User" },
         },
       },
+      ComplaintAttachment: {
+        type: "object",
+        properties: {
+          url: {
+            type: "string",
+            format: "uri",
+            example: "https://res.cloudinary.com/demo/image/upload/...",
+          },
+          publicId: {
+            type: "string",
+            example: "complaint-management/attachments/abc123",
+          },
+          originalName: { type: "string", example: "receipt.pdf" },
+          fileType: { type: "string", example: "application/pdf" },
+        },
+      },
       Complaint: {
         type: "object",
         properties: {
@@ -168,6 +185,10 @@ const openapiDocument = {
           assignedTo: {
             nullable: true,
             oneOf: [{ type: "string" }, { $ref: "#/components/schemas/User" }],
+          },
+          attachments: {
+            type: "array",
+            items: { $ref: "#/components/schemas/ComplaintAttachment" },
           },
           assignedAt: { type: "string", format: "date-time", nullable: true },
           resolution: { type: "string", nullable: true },
@@ -462,20 +483,124 @@ const openapiDocument = {
         },
       },
     },
-    "/api/complaints": {
+    "/api/auth/forgot-password": {
       post: {
-        tags: ["User Complaints"],
-        summary: "Create a complaint",
-        description:
-          "Requires the USER role. Priority should be sent in uppercase.",
-        security: [{ bearerAuth: [] }],
+        tags: ["Authentication"],
+        summary: "Request a password reset email",
         requestBody: {
           required: true,
           content: {
             "application/json": {
               schema: {
                 type: "object",
-                required: ["title", "description", "category", "priority"],
+                required: ["email"],
+                properties: {
+                  email: { type: "string", format: "email" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "If the account exists, a reset email is sent.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean", example: true },
+                    message: {
+                      type: "string",
+                      example:
+                        "If an account with that email exists, a password reset link has been sent.",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { $ref: "#/components/responses/ValidationError" },
+          500: { $ref: "#/components/responses/ServerError" },
+        },
+      },
+    },
+    "/api/auth/reset-password/{token}": {
+      post: {
+        tags: ["Authentication"],
+        summary: "Reset a password using a token",
+        parameters: [
+          {
+            name: "token",
+            in: "path",
+            required: true,
+            description: "Password reset token sent by email",
+            schema: { type: "string" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["password", "confirmPassword"],
+                properties: {
+                  password: {
+                    type: "string",
+                    format: "password",
+                    minLength: 8,
+                    maxLength: 128,
+                  },
+                  confirmPassword: {
+                    type: "string",
+                    format: "password",
+                    minLength: 8,
+                    maxLength: 128,
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Password reset successful.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean", example: true },
+                    message: {
+                      type: "string",
+                      example: "Password reset successfully",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { $ref: "#/components/responses/ValidationError" },
+          404: { $ref: "#/components/responses/NotFound" },
+          500: { $ref: "#/components/responses/ServerError" },
+        },
+      },
+    },
+    "/api/complaints": {
+      post: {
+        tags: ["User Complaints", "Uploads"],
+        summary: "Create a complaint",
+        description:
+          "Requires the USER role. Supports optional multipart attachments. Send files under the attachments field. Priority should be sent in uppercase.",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "multipart/form-data": {
+              schema: {
+                type: "object",
+                required: ["title", "description", "category"],
                 properties: {
                   title: { type: "string", minLength: 5, maxLength: 150 },
                   description: {
@@ -497,6 +622,12 @@ const openapiDocument = {
                     type: "string",
                     enum: ["LOW", "MEDIUM", "HIGH", "URGENT"],
                     default: "MEDIUM",
+                  },
+                  attachments: {
+                    type: "array",
+                    description:
+                      "Optional complaint attachments, up to 5 files. Allowed: JPG, PNG, WEBP, PDF.",
+                    items: { type: "string", format: "binary" },
                   },
                 },
               },
@@ -604,6 +735,88 @@ const openapiDocument = {
                   properties: {
                     message: { type: "string" },
                     complaint: { $ref: "#/components/schemas/Complaint" },
+                  },
+                },
+              },
+            },
+          },
+          400: { $ref: "#/components/responses/ValidationError" },
+          401: { $ref: "#/components/responses/Unauthorized" },
+          403: { $ref: "#/components/responses/Forbidden" },
+          404: { $ref: "#/components/responses/NotFound" },
+          500: { $ref: "#/components/responses/ServerError" },
+        },
+      },
+    },
+    "/api/complaints/{id}/comments": {
+      get: {
+        tags: ["Comments"],
+        summary: "List comments on a complaint",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/MongoId" }],
+        responses: {
+          200: {
+            description: "Complaint comments.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean", example: true },
+                    data: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Comment" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { $ref: "#/components/responses/Unauthorized" },
+          403: { $ref: "#/components/responses/Forbidden" },
+          404: { $ref: "#/components/responses/NotFound" },
+          500: { $ref: "#/components/responses/ServerError" },
+        },
+      },
+      post: {
+        tags: ["Comments", "Uploads"],
+        summary: "Add a comment with optional attachment files",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/MongoId" }],
+        requestBody: {
+          required: true,
+          content: {
+            "multipart/form-data": {
+              schema: {
+                type: "object",
+                required: ["message"],
+                properties: {
+                  message: { type: "string", minLength: 1, maxLength: 5000 },
+                  attachments: {
+                    type: "array",
+                    description:
+                      "Optional files uploaded with the comment. Allowed: JPG, PNG, WEBP, PDF.",
+                    items: { type: "string", format: "binary" },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: "Comment created.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean", example: true },
+                    message: {
+                      type: "string",
+                      example: "Comment added successfully",
+                    },
+                    data: { $ref: "#/components/schemas/Comment" },
                   },
                 },
               },
