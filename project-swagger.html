@@ -68,6 +68,54 @@
       .custom-toolbar button:hover {
         background: #1d4ed8;
       }
+      .summary-panel {
+        max-width: 1200px;
+        margin: 24px auto 8px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 20px 22px;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.04);
+      }
+      .summary-panel h1 {
+        margin: 0 0 12px;
+        font-size: 2rem;
+      }
+      .summary-panel h2 {
+        margin: 20px 0 10px;
+        font-size: 1.1rem;
+        color: #1e293b;
+      }
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+      }
+      .summary-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 14px 16px;
+      }
+      .summary-card h3 {
+        margin: 0 0 8px;
+        font-size: 0.95rem;
+        color: #0f172a;
+      }
+      .summary-card ul {
+        margin: 0;
+        padding-left: 18px;
+        color: #334155;
+      }
+      .summary-card li + li {
+        margin-top: 6px;
+      }
+      #swagger-ui {
+        max-width: 1200px;
+        margin: 0 auto 40px;
+        padding: 0 16px;
+      }
     </style>
   </head>
   <body>
@@ -80,6 +128,59 @@
       />
       <button id="load-docs" type="button">Load Docs</button>
     </div>
+
+    <section class="summary-panel">
+      <h1>Customer Complaint Management System</h1>
+      <p>
+        This project combines a Node.js/Express backend, a MongoDB data layer,
+        and a React frontend for handling customer complaints end-to-end. Users
+        can submit complaints, upload supporting files, track status, and
+        receive notifications, while admins and handlers manage assignments,
+        updates, and resolution work.
+      </p>
+
+      <div class="summary-grid">
+        <div class="summary-card">
+          <h3>Frontend</h3>
+          <ul>
+            <li>Role-based user, admin, and handler screens</li>
+            <li>Complaint creation with optional attachments</li>
+            <li>Comment thread with file uploads</li>
+            <li>Dashboard views and complaint detail pages</li>
+          </ul>
+        </div>
+
+        <div class="summary-card">
+          <h3>Backend</h3>
+          <ul>
+            <li>JWT auth with role enforcement</li>
+            <li>Complaint lifecycle and status transitions</li>
+            <li>Cloudinary attachment storage</li>
+            <li>Notifications, audit logs, and email alerts</li>
+          </ul>
+        </div>
+
+        <div class="summary-card">
+          <h3>Key flows</h3>
+          <ul>
+            <li>User submits complaint and optional evidence files</li>
+            <li>Admin assigns complaint to a handler</li>
+            <li>Handler updates status and resolves complaint</li>
+            <li>User closes resolved complaint after confirmation</li>
+          </ul>
+        </div>
+
+        <div class="summary-card">
+          <h3>Docs and tooling</h3>
+          <ul>
+            <li>Backend Swagger UI at /api/docs</li>
+            <li>Project-level summary page at project-swagger.html</li>
+            <li>Frontend setup notes in frontend/coding-guildline.md</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
     <div id="swagger-ui"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui-bundle.js"></script>
