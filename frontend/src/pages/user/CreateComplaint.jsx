@@ -16,18 +16,33 @@ export default function CreateComplaint() {
     category: "PAYMENT",
     priority: "MEDIUM",
   });
+  const [attachments, setAttachments] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
+  const handleFileChange = (e) => {
+    setAttachments(Array.from(e.target.files || []));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      const res = await userComplaintApi.create(form);
+      const formData = new FormData();
+      formData.append("title", form.title);
+      formData.append("description", form.description);
+      formData.append("category", form.category);
+      formData.append("priority", form.priority);
+
+      attachments.forEach((file) => {
+        formData.append("attachments", file);
+      });
+
+      const res = await userComplaintApi.create(formData);
       show("Complaint submitted successfully");
       navigate(`/complaints/${res.complaint.complaintId}`);
     } catch (err) {
@@ -110,9 +125,29 @@ export default function CreateComplaint() {
             </div>
           </div>
 
+          <div>
+            <label className="label">Attachments (optional)</label>
+            <input
+              type="file"
+              multiple
+              accept=".jpg,.jpeg,.png,.webp,.pdf"
+              className="input file:mr-3 file:rounded file:border-0 file:bg-indigo-600 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
+              onChange={handleFileChange}
+            />
+            {attachments.length > 0 && (
+              <p className="mt-2 text-xs text-slate-500">
+                {attachments.length} file(s) selected
+              </p>
+            )}
+          </div>
+
           {error && <ErrorAlert message={error} />}
 
-          <button type="submit" className="btn-primary w-full" disabled={loading}>
+          <button
+            type="submit"
+            className="btn-primary w-full"
+            disabled={loading}
+          >
             <Send className="h-4 w-4" />
             {loading ? "Submitting..." : "Submit Complaint"}
           </button>

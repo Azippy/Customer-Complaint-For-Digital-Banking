@@ -17,6 +17,13 @@ const createComplaint = async (req, res, next) => {
       throw new AppError("Title, description and category are required", 400);
     }
 
+    const attachments = (req.files || []).map((file) => ({
+      url: file.path,
+      publicId: file.filename,
+      originalName: file.originalname,
+      fileType: file.mimetype,
+    }));
+
     const complaintId = await generateComplaintId();
 
     const complaint = await Complaint.create({
@@ -24,8 +31,9 @@ const createComplaint = async (req, res, next) => {
       title,
       description,
       category: category.toUpperCase(),
-      priority: priority.toUpperCase(),
+      priority: priority ? priority.toUpperCase() : "MEDIUM",
       submittedBy: req.user._id,
+      attachments,
       status: "PENDING",
       statusHistory: [
         {

@@ -9,6 +9,7 @@ export default function CommentThread({ complaintMongoId }) {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [attachments, setAttachments] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -30,12 +31,13 @@ export default function CommentThread({ complaintMongoId }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    if (!message.trim() && attachments.length === 0) return;
     setSubmitting(true);
     setError("");
     try {
-      await commentApi.create(complaintMongoId, message);
+      await commentApi.create(complaintMongoId, message, attachments);
       setMessage("");
+      setAttachments([]);
       fetchComments();
     } catch (err) {
       setError(err.message);
@@ -62,9 +64,36 @@ export default function CommentThread({ complaintMongoId }) {
           onChange={(e) => setMessage(e.target.value)}
           maxLength={5000}
         />
-        {error && <div className="mt-2"><ErrorAlert message={error} /></div>}
+
+        <div className="mt-3">
+          <label className="label">Attachment (optional)</label>
+          <input
+            type="file"
+            multiple
+            accept=".jpg,.jpeg,.png,.webp,.pdf"
+            className="input file:mr-3 file:rounded file:border-0 file:bg-indigo-600 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
+            onChange={(e) => setAttachments(Array.from(e.target.files || []))}
+          />
+          {attachments.length > 0 && (
+            <p className="mt-2 text-xs text-slate-500">
+              {attachments.length} file(s) selected
+            </p>
+          )}
+        </div>
+
+        {error && (
+          <div className="mt-2">
+            <ErrorAlert message={error} />
+          </div>
+        )}
         <div className="mt-2 flex justify-end">
-          <button type="submit" className="btn-primary" disabled={submitting || !message.trim()}>
+          <button
+            type="submit"
+            className="btn-primary"
+            disabled={
+              submitting || (!message.trim() && attachments.length === 0)
+            }
+          >
             <Send className="h-4 w-4" />
             {submitting ? "Sending..." : "Post Comment"}
           </button>

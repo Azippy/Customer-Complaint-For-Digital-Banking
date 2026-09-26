@@ -10,10 +10,13 @@ function getToken() {
 
 async function request(path, options = {}) {
   const token = getToken();
+  const isFormData =
+    typeof FormData !== "undefined" && options.body instanceof FormData;
+
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
@@ -35,9 +38,15 @@ async function request(path, options = {}) {
 export const api = {
   get: (path) => request(path),
   post: (path, body) =>
-    request(path, { method: "POST", body: JSON.stringify(body) }),
+    request(path, {
+      method: "POST",
+      body: body instanceof FormData ? body : JSON.stringify(body),
+    }),
   patch: (path, body) =>
-    request(path, { method: "PATCH", body: JSON.stringify(body) }),
+    request(path, {
+      method: "PATCH",
+      body: body instanceof FormData ? body : JSON.stringify(body),
+    }),
   delete: (path) => request(path, { method: "DELETE" }),
 };
 
@@ -88,8 +97,12 @@ export const handlerApi = {
 export const commentApi = {
   list: (complaintMongoId) =>
     api.get(`/complaints/${complaintMongoId}/comments`),
-  create: (complaintMongoId, message) =>
-    api.post(`/complaints/${complaintMongoId}/comments`, { message }),
+  create: (complaintMongoId, message, files = []) => {
+    const formData = new FormData();
+    formData.append("message", message);
+    files.forEach((file) => formData.append("attachments", file));
+    return api.post(`/complaints/${complaintMongoId}/comments`, formData);
+  },
 };
 
 // Notifications
